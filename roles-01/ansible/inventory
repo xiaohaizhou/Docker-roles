@@ -1,0 +1,2 @@
+[hosts1]
+192.168.194.142 ansible_ssh_pass="qaz135@$^"

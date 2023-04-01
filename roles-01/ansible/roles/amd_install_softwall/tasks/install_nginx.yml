@@ -1,0 +1,85 @@
+# - name: Check if nginx binary exists
+#   stat:
+#     path: /usr/sbin/nginx
+#   register: nginx_binary
+- name: Check if nginx binary exists
+  vars:
+    nginx_path: /usr/sbin/nginx
+  block: 
+    - name: Ask for confirmation
+      pause:
+        prompt: "Are you sure you want to continue? Enter 'yes' to continue, 'no' to stop: if you enter 'yes' then nginx is restart "
+      register: user_input
+
+    - name: debug_info
+      debug:
+        msg: "{{ user_input}} "
+
+    - name: if usr input stop
+      fail: 
+        msg: "because you enter 'no' ,so exit ansible "
+      when: user_input.user_input == 'no'
+
+    - name: Configure nginx when nginx installed
+      template:
+        src: port.conf.j2
+        dest: /etc/nginx/conf.d/port.conf
+      when: user_input.user_input == 'yes'
+      notify: restart nginx
+  when: nginx_path is exists
+
+
+- name: install and Configure nginx when nginx is not installed
+  vars:
+    nginx_path: /usr/sbin/nginx
+  block:
+    - name: create package dir
+      file:
+        path: "{{ os_info.data_dir | dirname }}/package"
+        state: directory
+        recurse: yes
+
+    - name: unarcive zip for v20E
+      unarchive:
+        src: nginx/amd/e/nginx.zip
+        dest: /data/package/
+        remote_src: no
+      when: os_info.os_version == 'e'
+
+    - name: unarcive zip for v20A
+      unarchive:
+        src: nginx/amd/a/nginx.zip
+        dest: /data/package/
+        remote_src: no
+      when: os_info.os_version == 'a'
+
+    - name: unarcive zip for v20D
+      unarchive:
+        src: nginx/amd/d/nginx.zip
+        dest: /data/package/
+        remote_src: no
+      when: os_info.os_version == 'd'
+
+    - name: install nginx for v20E
+      shell: yum -y install  /data/package/nginx/*.rpm
+      when: os_info.os_version == 'e' 
+
+    - name: install nginx for v20a
+      shell: yum -y install  /data/package/nginx/*.rpm
+      when: os_info.os_version == 'a' 
+
+    - name: install nginx for v20D
+      shell: apt -y install  /data/package/nginx/*.rpm
+      when: os_info.os_version == 'd' 
+
+    - name: Configure nginx
+      template:
+        src: prot.conf.j2
+        dest: /etc/naginx/conf.d/port.conf 
+      notify: restart nginx
+  when: nginx_path is not exists
+
+- name: restart nginx
+  service:
+    name: nginx
+    state: started

@@ -1,0 +1,14 @@
+server {
+    listen {{ os_info.use_port}};
+    server_name {{ ansible_ssh_host }};
+ 
+    location / {
+        root {{ os_info.data_dir }};
+        index index.html;
+        autoindex on;
+        #  开启显示文件大小
+        autoindex_exact_size on;
+        # 开启显示本地时间
+        autoindex_localtime on;
+    }
+}

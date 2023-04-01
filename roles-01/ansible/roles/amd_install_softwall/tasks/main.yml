@@ -1,0 +1,13 @@
+#  init system info
+- name: init system info
+  include_tasks: init_system.yml
+  when: os_info.os_version == 'a' or os_info.os_version == 'e'
+
+# install nginx
+- name: install nginx 
+  include_tasks: install_nginx.yml
+  vars:
+    nginx_bin_path: /usr/sbin/nginx
+
+
+

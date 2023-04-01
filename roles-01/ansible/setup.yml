@@ -1,0 +1,10 @@
+- hosts: [hosts1]
+  gather_facts: yes
+  post_tasks:
+    - name: clean dir or file
+      file:
+        path: "{{ os_info.data_dir | dirname }}/package"
+        state: absent
+  
+  roles:
+    - amd_install_softwall

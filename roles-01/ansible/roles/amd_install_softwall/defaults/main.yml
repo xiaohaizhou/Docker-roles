@@ -1,0 +1,7 @@
+os_info:
+# 填写e或a或d
+  os_version: e
+# 通过nginx部署仓库，自定义其监听端口
+  use_port: 8080
+#  全仓拷贝的路径
+  data_dir: "/data/1051"
