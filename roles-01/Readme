@@ -1,1 +1,3 @@
-
+该role介绍：
+主要是通过ansible-roles来在龙芯，arm，amd的服务器操作系统（a版，e版，d版）上部署内网仓库，通过脚本来判断是在龙芯还是arm还是amd的服务器上部署，然后根据传入的参数执行对应架构的ansible-roles，
+ansible-roles里面通过when来判断是a版还是e版还是d版，然后安装不同版本的离线包来执行不同的yaml。
