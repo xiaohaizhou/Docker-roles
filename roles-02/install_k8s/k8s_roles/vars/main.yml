@@ -1,0 +1,30 @@
+system_var:
+  system_package_list:
+    - ntpdate
+    - ipvsadm
+
+  system_ipvs_moudle:
+    - ip_vs
+    - ip_vs_rr
+    - ip_vs_wrr
+    - ip_vs_sh
+    - nf_conntrack_ipv4
+
+  ntp_server: ntp1.aliyun.com
+
+
+docker_vars:
+  docker_version: docker-ce-23.0.5
+  package_list:
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+
+k8s_vars:
+  k8s_version: 1.21.9
+  package_list: 
+    - kubeadm-1.21.9
+    - kubectl-1.21.9 
+    - kubelet-1.21.9
+  k8s_init_registry: registry.cn-hangzhou.aliyuncs.com/google_containers
+  k8s_resource_dir: "/home/uos/kubernetes/"

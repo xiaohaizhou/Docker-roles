@@ -1,0 +1,50 @@
+- name: get apiserver  address
+  run_once: yes
+  delegate_to: '{{ groups["master"][0] }}'
+  command:
+    cmd: /bin/bash -c "grep kube-apiserver.advertise-address.endpoint kube-apiserver.yaml | awk '{print $2}'"
+    chdir: "/etc/kubernetes/manifests/"
+  register: apiserver_ip
+
+- name: get master token
+  run_once: yes
+  delegate_to: '{{ groups["master"][0] }}'
+  become: yes
+  command:
+    cmd: > 
+      /bin/bash -c "
+        {% raw %}
+        tokens=($(kubeadm token list | grep -v TOKEN | awk '{print $1}'))
+        if [ ${#tokens} != 0 ]; then
+                token=${tokens[0]};
+        else 
+            kubeadm token create;
+            tokens=($(kubeadm token list | grep -v TOKEN | awk '{print $1}'));
+        fi
+        echo ${tokens[0]};
+        {% endraw %}"
+  register: token
+
+- name: Generate sha256 value for kubeadm CA certificate
+  run_once: yes
+  delegate_to: '{{ groups["master"][0] }}'
+  command: 
+    cmd: bash -c "openssl x509 -pubkey -in {{ k8s_vars.k8s_resource_dir }}/backup_ca/{{ inventory_hostname }}/etc/kubernetes/pki/node_token_sha256/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'"
+  register: ca_cert_sha256
+
+- name: enable bridge-nf-call-iptables
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    state: present
+
+- name: tamplate kube-join.yaml.j2
+  template: 
+    src: templates/kube-join.yaml.j2
+    dest: /home/kube-join.yaml
+    backup: yes
+
+- name: join node
+  command:
+    cmd: /usr/bin/kubeadm join --config kube-join.yaml
+    chdir: "/home"

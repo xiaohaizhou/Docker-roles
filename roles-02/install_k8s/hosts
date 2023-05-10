@@ -1,0 +1,6 @@
+[master]
+master.example.com  ansible_host=192.168.194.128 ansible_ssh_pass=123
+
+[node]
+node1.example.com  ansible_host=192.168.194.130 ansible_ssh_pass=123
+node2.example.com  ansible_host=192.168.194.131 ansible_ssh_pass=123

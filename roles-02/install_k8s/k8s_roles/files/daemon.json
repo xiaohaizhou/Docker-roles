@@ -1,0 +1,10 @@
+{
+    "data-root":"/var/lib/docker",
+    "registry-mirrors":["https://o0o4czij.mirror.aliyuncs.com"],
+    "log-driver":"json-file",
+    "log-level":"info",
+    "log-opts":{
+        "max-size":"100m",
+        "max-file":"10"
+        }
+}

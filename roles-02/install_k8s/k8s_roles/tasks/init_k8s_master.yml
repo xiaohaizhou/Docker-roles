@@ -1,0 +1,67 @@
+- name: create /home/uos/kubernetes
+  file:
+    path: "{{ k8s_vars.k8s_resource_dir }}"
+    state: directory
+
+- name: template k8s init_config_file
+  template:
+    src: templates/kubeadm-config.yml.j2
+    dest: "{{ k8s_vars.k8s_resource_dir }}/kubeadm-config.yml"
+    backup: yes
+
+- name: enable bridge-nf-call-iptables
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    state: present
+
+- name: kubeadm  init k8s
+  command:
+    cmd: /usr/bin/kubeadm init --config kubeadm-config.yml
+    chdir: "{{ k8s_vars.k8s_resource_dir }}"
+    creates: /etc/kubernetes/pki/ca.crt
+
+- name: copy kubeadm dmin.conf of HOME
+  command: 
+    cmd: bash -c "mkdir -p $HOME/.kube && cp -f /etc/kubernetes/admin.conf $HOME/.kube/config"
+    
+# - name: export  admin.conf
+#   command:
+#     cmd: export KUBECONFIG=/etc/kubernetes/admin.conf
+
+- name: 获取k8s证书
+  block:
+  - name: get  k8s_master ca
+    find:
+      paths: /etc/kubernetes/pki
+      patterns: 'ca.*,sa.*,front-proxy-ca.*'
+    register: pki_list
+
+  - name: 保存CA在本地的backup目录
+    fetch: 
+      dest: "{{ k8s_vars.k8s_resource_dir }}/backup_ca"
+      src: '{{ item.path }}'
+    with_items: '{{ pki_list.files }}'
+
+  - name: get k8s_master etcd_ca
+    find:
+      paths: /etc/kubernetes/pki/etcd
+      patterns: 'ca.*'
+    register: pki_list
+
+  - name: 保存etcd的CA证书列表到本地backup目录
+    fetch: 
+      dest: "{{ k8s_vars.k8s_resource_dir }}/backup_ca"
+      src: '{{ item.path }}'
+    loop: '{{ pki_list.files }}'
+
+- name: apply kube-flannel
+  copy:
+    src: files/kube-flannel.yml
+    dest: "{{ k8s_vars.k8s_resource_dir }}"
+    backup: yes
+
+- name: init kube-flannel
+  command:
+    cmd: /usr/bin/kubectl apply -f  kube-flannel.yml
+    chdir: "{{ k8s_vars.k8s_resource_dir }}"

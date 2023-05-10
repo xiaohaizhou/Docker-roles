@@ -1,0 +1,5 @@
+- name: configure_docker
+  service:
+    name: dokcer
+    state: restarted
+    enabled: yes

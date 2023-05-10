@@ -1,0 +1,21 @@
+- name: init system info
+  include_tasks:
+    file: init_system.yml
+
+- name: install docker-ce
+  include_tasks:
+    file: install_docker.yml
+
+- name: install k8s
+  include_tasks: 
+    file: install_k8s.yml
+
+- name: init k8s_master
+  include_tasks:
+    file: init_k8s_master.yml
+  when: inventory_hostname in groups.master
+
+- name: join node
+  include_tasks:
+    file: join_node.yml
+  when: inventory_hostname in groups.node

@@ -1,0 +1,41 @@
+- name: create  docker-ce  repo
+  block:
+    - name: install
+      package:
+        name: "{{ item }}"
+        state: present
+      with_list: "{{ docker_vars.package_list}}"
+
+
+    - name: configure1
+      command:
+        cmd: yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+    - name: configure2
+      command:
+        cmd: sed -i 's+download.docker.com+mirrors.aliyun.com/docker-ce+' /etc/yum.repos.d/docker-ce.repo
+
+    - name: configure3
+      command:
+        cmd: yum makecache fast
+
+- name: install docker-ce
+  package:
+    name: "{{ docker_vars.docker_version}}"
+    state: present
+
+- name: configure docker
+  copy:
+    src: files/daemon.json
+    dest: /etc/docker/
+    backup: yes
+  notify: configure_docker
+
+
+- name: start docker-ce
+  service:
+    name: docker.service
+    state: started 
+    enabled: yes
+
+    

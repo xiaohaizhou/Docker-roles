@@ -1,0 +1,71 @@
+- name: install ntpdate
+  package:
+    name: "{{ item }}"
+    state: present
+  with_list: "{{ system_var.system_package_list }}"
+
+- name: Time synchronization
+  command:
+    cmd: ntpdate "{{ system_var.ntp_server }}"
+
+- name: stop firewalld
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: stop selinux
+  selinux:
+    policy: targeted
+    state: disabled
+#   persistent yes
+# 新版的selinux模块可以通过persistent参数，在修改为disable后，重启任然生效，这里旧版不支持，则下面修改了/etc/selinux/config
+
+- name: Disable SELinux in /etc/selinux/config
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: 'SELINUX=disabled'
+
+- name: stop swap
+  block:
+    - name: swapoff
+      command:
+        cmd: swapoff -a
+
+    - name: configure /etc/fstab
+      lineinfile:
+        path: /etc/fstab
+        regexp: '^/dev/mapper/.*swap.*'
+        line: '# commented out by Ansible'
+        backup: yes
+        state: present
+
+- name: configure kernerl
+  block:
+    - name: configure ip_forward
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        state: present
+
+    - name: sysctl -p
+      command:
+        cmd: sysctl -p
+
+- name: modprobe kernel modules
+  modprobe:
+    name: "{{ item }}"
+  with_list: "{{ system_var.system_ipvs_moudle }}"
+
+- name: sethostname
+  command:
+    cmd: hostnamectl set-hostname "{{ inventory_hostname }}"
+
+- name: configure /etc/hosts
+  template:
+    src: templates/hosts.j2
+    dest: /etc/hosts
+    backup: yes
+    mode: 0644
+

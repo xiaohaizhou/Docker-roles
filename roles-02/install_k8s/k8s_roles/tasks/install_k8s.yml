@@ -1,0 +1,25 @@
+- name: config kubernetes  repo
+  copy:
+    src: files/kubernetes.repo
+    dest: /etc/yum.repos.d/
+    backup: yes
+
+- name: install kubeadm kubectl  kubelet
+  yum:
+    name: " {{ item }}"
+    state: present
+  with_list: "{{ k8s_vars.package_list }}"
+
+- name: check (kubeadm kubectl  kubelet) version
+  command:
+    cmd: /bin/bash -c "rpm -qa |grep kube* |grep -v kubernetes*"
+  register: result
+  failed_when:  ("kubectl-1.21.9-0.x86_64" not in  result.stdout_lines) and ("kubeadm-1.21.9-0.x86_64" not in  result.stdout_lines) and ("kubelet-1.21.9-0.x86_64" not in  result.stdout_lines)
+    
+    
+
+- name: start and enable kubelet
+  service:
+    name: kubelet.service
+    state: started
+    enabled: yes
